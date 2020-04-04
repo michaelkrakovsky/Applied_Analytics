@@ -1,14 +1,14 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 from fastai.vision import *
 import zipfile
 
 
-# In[2]:
+# In[3]:
 
 
 #!pip install kaggle                # Installs Kaggle API to download package and configure environment.
@@ -17,7 +17,7 @@ import zipfile
 #!kaggle competitions download -c dogs-vs-cats      # Command that actually downloads files
 
 
-# In[9]:
+# In[4]:
 
 
 def unzip(path):
@@ -33,7 +33,7 @@ unzip('dogs-vs-cats.zip')         # Unpack the test and training data.
 unzip('train.zip')
 
 
-# In[10]:
+# In[5]:
 
 
 path_img = Path('train')             # Read the names of all the picture files.
@@ -42,21 +42,21 @@ print(fnames[-2:])      # Dogs
 print(fnames[:2])       # Cats
 
 
-# In[11]:
+# In[6]:
 
 
 np.random.seed(2)
 reg = r'/([^/]+)\.\d+.jpg$'
 
 
-# In[12]:
+# In[7]:
 
 
 data = ImageDataBunch.from_name_re(path_img, fnames, pat=reg, ds_tfms=get_transforms(), size=224)
 data.normalize(imagenet_stats)
 
 
-# In[14]:
+# In[8]:
 
 
 data.show_batch(rows=3, figsize=(5,7))
@@ -116,4 +116,48 @@ learn.recorder.plot()
 
 learn.unfreeze()        # Train the entire model with adjusted learning rate.
 learn.fit_one_cycle(2, max_lr=slice(1e-7, 1e-5))
+
+
+# In[9]:
+
+
+# Setting up data for Resnet50 - Use a smaller bs if you run out of memory (bs)
+data = ImageDataBunch.from_name_re(path_img, fnames, pat=reg, ds_tfms=get_transforms(), size=224)
+data.normalize(imagenet_stats)
+data.show_batch(rows=3, figsize=(5,7))
+print(data.classes),data.c
+
+
+# In[10]:
+
+
+# Attempt to use Resnet50
+learn = cnn_learner(data, models.resnet50, metrics=error_rate)
+
+
+# In[11]:
+
+
+learn.fit_one_cycle(5)
+
+
+# In[13]:
+
+
+learn.save("res50")
+learn.lr_find()
+learn.recorder.plot()
+
+
+# In[14]:
+
+
+learn.unfreeze()
+learn.fit_one_cycle(3, max_lr=slice(1e-6,1e-3))
+
+
+# In[ ]:
+
+
+
 

@@ -1,0 +1,76 @@
+
+# coding: utf-8
+
+# In[1]:
+
+
+from fastai.vision import *
+
+
+# In[14]:
+
+
+# The class names of all the data files.
+classes = ['afghan_war', 'civil_war', 'gulf_war', 'korean_war', 'lebonon_war', 'vietnam_war', 'ww1', 'ww2']
+
+
+# In[20]:
+
+
+# Download all the files into the respective repositories.
+path_links = './data_links/'
+path_dest = './data/'
+
+for i in classes:
+    file_name = path_links + i + '.txt'
+    file_name = Path(file_name)
+    dest = path_dest + i
+    dest = Path(dest)
+    download_images(file_name, dest, max_pics=300)
+    print(i + ": Successfully Downloaded.")
+
+
+# In[26]:
+
+
+for c in classes:
+    print("Verifying Images In: {}".format(c))
+    final_dest = Path(path_dest + c)
+    verify_images(final_dest, delete=True, max_size=500)
+
+
+# In[43]:
+
+
+# Organise the data into proper folders.
+np.random.seed(42)
+data = ImageDataBunch.from_folder(path_dest, train=".", valid_pct=0.2,
+        ds_tfms=get_transforms(), size=224, num_workers=4, bs=10).normalize(imagenet_stats)
+
+
+# In[44]:
+
+
+# Display some of the data... looks like it will require some scrubbing.
+data.show_batch(rows=3, figsize=(7,8))
+
+
+# In[45]:
+
+
+# Display additional parameters. Is this enough data?
+data.classes, data.c, len(data.train_ds), len(data.valid_ds)
+
+
+# In[47]:
+
+
+# Train with resnet34
+learn = cnn_learner(data, models.resnet34, metrics=error_rate)
+
+
+# In[ ]:
+
+
+learn.fit_one_cycle(4)
+
